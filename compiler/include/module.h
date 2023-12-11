@@ -2,6 +2,7 @@
 #define __MODULE__H__
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 /**
@@ -103,6 +104,31 @@ class Module {
      * throws an exception if we tried to remove a entry basic block or the function does not exist.
      */
     bool remove_basic_block(const std::string &fn_name, const std::string &blk_name);
+};
+
+/**
+ * @brief Represents the link between an implied predecessor and the successor.
+ *
+ */
+struct Link {
+    std::string succ;
+    std::string tag;
+};
+
+/**
+ * @brief Adjacency list representing predecessor and successor relationship as a graph from the
+ * predecessor to its links.
+ *
+ */
+class Graph {
+    std::unordered_map<std::string, std::vector<Link>> graph;
+
+  public:
+    const std::string &get_tag(const std::string &pred, const std::string &succ) const;
+
+    void insert_tag(const std::string &pred, const std::string &succ, const std::string &tag);
+
+    bool is_successor(const std::string &pred, const std::string &succ);
 };
 
 #endif //!__MODULE__H__

@@ -1,4 +1,5 @@
 #include "module.h"
+#include <algorithm>
 #include <stdexcept>
 
 void Module::insert(const Function &fn) noexcept { functions.push_back(fn); }
@@ -57,4 +58,11 @@ bool Module::remove_basic_block(const std::string &fn_name, const std::string &b
 
     // NOTE: We're assuming this should never happen. Otherwise we could return an optional value.
     throw std::runtime_error("There is no Function with this name!");
+}
+
+void Graph::insert_tag(const std::string &pred, const std::string &succ, const std::string &tag) {
+    auto link = Link{succ, tag};
+    auto links = graph[pred];
+
+    links.insert(std::upper_bound(links.begin(), links.end(), link), link);
 }
