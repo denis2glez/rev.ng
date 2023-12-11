@@ -9,12 +9,12 @@
 void SuccGraph::add_successor(const std::string &pred, const std::string &succ,
                               const std::string &tag) {
     auto link = Link{tag, succ};
-    auto &pred_links = graph[pred];
+    auto &succ_links = graph[pred];
 
     // C++20 ranges are also a welcoming upgrade.
-    auto it = std::lower_bound(pred_links.begin(), pred_links.end(), link);
-    if (it == pred_links.end() || it->tag != tag) {
-        pred_links.insert(it, link);
+    auto it = std::lower_bound(succ_links.begin(), succ_links.end(), link);
+    if (it == succ_links.end() || it->tag != tag) {
+        succ_links.insert(it, link);
     } else if (it->tag == tag) {
         // NOTE: We're assuming this should never happen.
         throw std::runtime_error(
@@ -23,15 +23,21 @@ void SuccGraph::add_successor(const std::string &pred, const std::string &succ,
 }
 
 bool SuccGraph::remove_successor(const std::string &pred, const std::string &succ) {
-    auto &pred_links = graph[pred];
+    auto &succ_links = graph[pred];
 
-    const auto it = std::ranges::find_if(pred_links, [&](const Link &l) { return succ == l.succ; });
+    const auto it = std::ranges::find_if(succ_links, [&](const Link &l) { return succ == l.succ; });
 
-    if (it == pred_links.end()) {
+    if (it == succ_links.end()) {
         return false;
     }
 
-    pred_links.erase(it);
+    // When deleting a block that is not a leaf we have to relink the predecessor to the new
+    // successors.
+    for (auto &[tag, succ_succ] : graph[succ]) {
+        add_successor(pred, succ_succ, tag);
+    }
+
+    succ_links.erase(it);
     return true;
 }
 
