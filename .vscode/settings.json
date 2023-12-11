@@ -1,0 +1,6 @@
+{
+    "cmake.configureOnOpen": true,
+    "clangd.arguments": [
+        "--query-driver=/usr/bin/gcc,/usr/bin/g++"
+    ],
+}
