@@ -25,13 +25,62 @@ class BasicBlock {
 };
 
 /**
- * @brief A function contains one or more basic blocks. One of them is the entry basic block.
- *
+ * @brief Represents the link between an implied predecessor and the successor. Since the tag is
+ * unique, it is used as the primary field. Thus each basic block has, at most, one successor per
+ * tag.
+ */
+struct Link {
+    std::string tag;
+    std::string succ;
+
+    // C++20 operator<=> is definitely a step forward.
+    auto operator<=>(const Link &r) const { return tag <=> r.tag; }
+};
+
+/**
+ * @brief Successor graph represented as an adjacency list from the predecessor to a list of its
+ * successors.
+ */
+class SuccGraph {
+    using SuccGraphType = std::unordered_map<std::string, std::vector<Link>>;
+
+    // The successors list is represented as an ordered vector assuming that, in general, its cache
+    // locality will have a major impact on performance. Otherwise we could use a set.
+    SuccGraphType graph;
+
+  public:
+    const SuccGraphType &get_succ_graph() const { return graph; }
+
+    const std::string &get_tag(const std::string &pred, const std::string &succ) const;
+
+    /**
+     * @brief Adds a new successor to the basic block @c pred.
+     *
+     * @param pred
+     * @param succ
+     * @param tag
+     */
+    void add_successor(const std::string &pred, const std::string &succ, const std::string &tag);
+
+    /**
+     * @brief Removes a successor of the basic block @c pred returns true if it exists and false
+     * otherwise.
+     *
+     * @param pred
+     * @param succ
+     */
+    bool remove_successor(const std::string &pred, const std::string &succ);
+};
+
+/**
+ * @brief A function contains one or more basic blocks. One of them is the entry basic block and by
+ * design it is unique.
  */
 class Function {
     std::string name;
     BasicBlock entry;
     std::vector<BasicBlock> blocks;
+    SuccGraph succ_graph;
 
   public:
     // Rule of zero
@@ -60,6 +109,24 @@ class Function {
      * throws an exception if we tried to remove the entry basic block.
      */
     bool remove_basic_block(const std::string &blk_name);
+
+    /**
+     * @brief Adds a new successor to the basic block @c pred.
+     *
+     * @param pred
+     * @param succ
+     * @param tag
+     */
+    void add_successor(const std::string &pred, const std::string &succ, const std::string &tag);
+
+    /**
+     * @brief Removes a successor of the basic block @c pred returns true if it exists and false
+     * otherwise.
+     *
+     * @param pred
+     * @param succ
+     */
+    bool remove_successor(const std::string &pred, const std::string &succ);
 };
 
 /**
@@ -104,31 +171,6 @@ class Module {
      * throws an exception if we tried to remove a entry basic block or the function does not exist.
      */
     bool remove_basic_block(const std::string &fn_name, const std::string &blk_name);
-};
-
-/**
- * @brief Represents the link between an implied predecessor and the successor.
- *
- */
-struct Link {
-    std::string succ;
-    std::string tag;
-};
-
-/**
- * @brief Adjacency list representing predecessor and successor relationship as a graph from the
- * predecessor to its links.
- *
- */
-class Graph {
-    std::unordered_map<std::string, std::vector<Link>> graph;
-
-  public:
-    const std::string &get_tag(const std::string &pred, const std::string &succ) const;
-
-    void insert_tag(const std::string &pred, const std::string &succ, const std::string &tag);
-
-    bool is_successor(const std::string &pred, const std::string &succ);
 };
 
 #endif //!__MODULE__H__
