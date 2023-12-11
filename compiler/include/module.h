@@ -73,6 +73,9 @@ class SuccGraph {
     // The successors list is represented as an ordered vector assuming that, in general, its cache
     // locality will have a major impact on performance. Otherwise we could use a set.
     SuccGraphType graph;
+
+    // Keep a counter of many predecessors exists for a given block;
+    std::unordered_map<std::string, int> pred_counter;
 };
 
 /**
@@ -126,7 +129,7 @@ class Function {
      */
     bool remove_successor(const std::string &pred, const std::string &succ);
 
-    void generate_dot();
+    std::string generate_dot();
 
   private:
     std::string name;

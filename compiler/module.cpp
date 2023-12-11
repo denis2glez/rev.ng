@@ -1,6 +1,5 @@
 #include "module.h"
 #include <algorithm>
-#include <iostream>
 #include <queue>
 #include <stdexcept>
 #include <string>
@@ -15,6 +14,7 @@ void SuccGraph::add_successor(const std::string &pred, const std::string &succ,
     auto it = std::lower_bound(succ_links.begin(), succ_links.end(), link);
     if (it == succ_links.end() || it->tag != tag) {
         succ_links.insert(it, link);
+        pred_counter[succ]++;
     } else if (it->tag == tag) {
         // NOTE: We're assuming this should never happen.
         throw std::runtime_error(
@@ -25,16 +25,27 @@ void SuccGraph::add_successor(const std::string &pred, const std::string &succ,
 bool SuccGraph::remove_successor(const std::string &pred, const std::string &succ) {
     auto &succ_links = graph[pred];
 
-    const auto it = std::ranges::find_if(succ_links, [&](const Link &l) { return succ == l.succ; });
+    auto lambda = [&](const Link &l) { return succ == l.succ; };
+    auto it = std::ranges::find_if(succ_links, lambda);
 
     if (it == succ_links.end()) {
         return false;
     }
 
-    // When deleting a block that is not a leaf we have to relink the predecessor to the new
-    // successors.
-    for (auto &[tag, succ_succ] : graph[succ]) {
-        add_successor(pred, succ_succ, tag);
+    if (--pred_counter[succ] == 0) {
+        // When deleting a block that is not a leaf we have to relink the predecessor to the new
+        // successors.
+        for (auto &[tag, succ_succ] : graph[succ]) {
+            add_successor(pred, succ_succ, tag);
+        }
+
+        // At this point we are sure it is contained in succ_links but the iterators were probably
+        // invalidated.
+        succ_links = graph[pred];
+        it = std::ranges::find_if(succ_links, lambda);
+
+        graph.erase(succ);
+        pred_counter.erase(succ);
     }
 
     succ_links.erase(it);
@@ -86,7 +97,7 @@ void Function::generate_dot(std::stringstream &buffer, const std::string &entry_
 
         auto &successors = succ_graph.get_succ_graph()[blk_name];
         for (const auto &[succ_tag, succ] : successors) {
-            buffer << blk_name << " -> " << succ << "[label=\"" << succ_tag << "\"];\n";
+            buffer << '\t' << blk_name << " -> " << succ << "[label=\"" << succ_tag << "\"];\n";
             queue.push(succ);
         }
 
@@ -94,15 +105,15 @@ void Function::generate_dot(std::stringstream &buffer, const std::string &entry_
     }
 }
 
-void Function::generate_dot() {
+std::string Function::generate_dot() {
     std::stringstream buffer;
-    buffer << "digraph ControlFlowGraph{\n";
-    buffer << "node[shape=oval]\n";
-    buffer << "edge[color=\"red\"]\n";
+    buffer << "digraph " << name << " {\n";
+    buffer << "\tnode[shape=oval];\n";
+    buffer << "\tedge[color=\"red\"];\n";
     generate_dot(buffer, entry.get_name());
     buffer << "}\n";
 
-    std::cout << buffer.str();
+    return buffer.str();
 }
 
 void Module::insert(const Function &fn) noexcept { functions.push_back(fn); }
