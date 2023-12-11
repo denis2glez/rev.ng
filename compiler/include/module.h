@@ -2,6 +2,7 @@
 #define __MODULE__H__
 
 #include <string>
+#include <sstream>
 #include <unordered_map>
 #include <vector>
 
@@ -10,8 +11,6 @@
  *
  */
 class BasicBlock {
-    std::string name;
-
   public:
     // Rule of zero
     /**
@@ -22,6 +21,9 @@ class BasicBlock {
     explicit BasicBlock(const std::string &name) : name(name) {}
 
     const std::string &get_name() const { return name; }
+
+  private:
+    std::string name;
 };
 
 /**
@@ -42,14 +44,10 @@ struct Link {
  * successors.
  */
 class SuccGraph {
+  public:
     using SuccGraphType = std::unordered_map<std::string, std::vector<Link>>;
 
-    // The successors list is represented as an ordered vector assuming that, in general, its cache
-    // locality will have a major impact on performance. Otherwise we could use a set.
-    SuccGraphType graph;
-
-  public:
-    const SuccGraphType &get_succ_graph() const { return graph; }
+    SuccGraphType &get_succ_graph() { return graph; }
 
     const std::string &get_tag(const std::string &pred, const std::string &succ) const;
 
@@ -70,6 +68,11 @@ class SuccGraph {
      * @param succ
      */
     bool remove_successor(const std::string &pred, const std::string &succ);
+
+  private:
+    // The successors list is represented as an ordered vector assuming that, in general, its cache
+    // locality will have a major impact on performance. Otherwise we could use a set.
+    SuccGraphType graph;
 };
 
 /**
@@ -77,11 +80,6 @@ class SuccGraph {
  * design it is unique.
  */
 class Function {
-    std::string name;
-    BasicBlock entry;
-    std::vector<BasicBlock> blocks;
-    SuccGraph succ_graph;
-
   public:
     // Rule of zero
     /**
@@ -127,6 +125,16 @@ class Function {
      * @param succ
      */
     bool remove_successor(const std::string &pred, const std::string &succ);
+
+    void generate_dot();
+
+  private:
+    std::string name;
+    BasicBlock entry;
+    std::vector<BasicBlock> blocks;
+    SuccGraph succ_graph;
+
+    void generate_dot(std::stringstream &buffer, const std::string &entry_name);
 };
 
 /**
@@ -134,9 +142,6 @@ class Function {
  *
  */
 class Module {
-    std::string name;
-    std::vector<Function> functions;
-
   public:
     // Rule of zero
     /**
@@ -171,6 +176,10 @@ class Module {
      * throws an exception if we tried to remove a entry basic block or the function does not exist.
      */
     bool remove_basic_block(const std::string &fn_name, const std::string &blk_name);
+
+  private:
+    std::string name;
+    std::vector<Function> functions;
 };
 
 #endif //!__MODULE__H__

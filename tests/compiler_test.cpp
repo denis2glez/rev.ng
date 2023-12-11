@@ -55,7 +55,7 @@ TEST(SuccessorTest, InsertSuccessor) {
     graph.add_successor("blk2", "blk3", "tag3");
     graph.add_successor("blk1", "blk3", "tag1");
     graph.add_successor("blk2", "blk3", "tag2");
-    // graph.add_successor("blk1", "blk4", "tag1");
+    graph.add_successor("blk1", "blk4", "tag1");
 
     EXPECT_EQ(graph.get_succ_graph().size(), 2);
     auto succ_graph = graph.get_succ_graph();

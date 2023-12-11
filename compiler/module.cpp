@@ -1,6 +1,10 @@
 #include "module.h"
 #include <algorithm>
+#include <iostream>
+#include <queue>
 #include <stdexcept>
+#include <string>
+#include <unordered_set>
 
 void SuccGraph::add_successor(const std::string &pred, const std::string &succ,
                               const std::string &tag) {
@@ -60,6 +64,39 @@ void Function::add_successor(const std::string &pred, const std::string &succ,
 
 bool Function::remove_successor(const std::string &pred, const std::string &succ) {
     return succ_graph.remove_successor(pred, succ);
+}
+
+void Function::generate_dot(std::stringstream &buffer, const std::string &entry_name) {
+    std::queue<std::string> queue;
+    queue.push(entry_name);
+    std::unordered_set<std::string> visited;
+
+    while (!queue.empty()) {
+        auto &blk_name = queue.front();
+        queue.pop();
+
+        if (visited.contains(blk_name))
+            continue;
+
+        auto &successors = succ_graph.get_succ_graph()[blk_name];
+        for (const auto &[succ_tag, succ] : successors) {
+            buffer << blk_name << " -> " << succ << "[label=\"" << succ_tag << "\"];\n";
+            queue.push(succ);
+        }
+
+        visited.insert(blk_name);
+    }
+}
+
+void Function::generate_dot() {
+    std::stringstream buffer;
+    buffer << "digraph ControlFlowGraph{\n";
+    buffer << "node[shape=oval]\n";
+    buffer << "edge[color=\"red\"]\n";
+    generate_dot(buffer, entry.get_name());
+    buffer << "}\n";
+
+    std::cout << buffer.str();
 }
 
 void Module::insert(const Function &fn) noexcept { functions.push_back(fn); }
