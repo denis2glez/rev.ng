@@ -7,7 +7,7 @@ foreach (FILE_NAME ${SOURCES})
     string(REPLACE ".cpp" "" TEST_NAME "${FILE_NAME}")
     # Create a test
     add_executable(${TEST_NAME} ${FILE_NAME})
-    target_link_libraries(${TEST_NAME} PRIVATE GTest::GTest GTest::gtest_main math)
+    target_link_libraries(${TEST_NAME} PRIVATE GTest::GTest GTest::gtest_main compiler)
 
     # install(TARGETS ${TEST_NAME} DESTINATION "tests")
 endforeach ()

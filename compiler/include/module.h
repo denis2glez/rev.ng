@@ -19,6 +19,8 @@ class BasicBlock {
      * @param name basic block name.
      */
     explicit BasicBlock(const std::string &name) : name(name) {}
+
+    const std::string &get_name() const { return name; }
 };
 
 /**
@@ -41,7 +43,22 @@ class Function {
     explicit Function(const std::string &name, const BasicBlock &entry)
         : name(name), entry(entry) {}
 
-    std::string &get_name();
+    const std::string &get_name() const { return name; }
+
+    const BasicBlock &get_entry_block() const { return entry; }
+
+    const std::vector<BasicBlock> &get_basic_blocks() const { return blocks; }
+
+    /**
+     *  Inserts a new basic block into the current function.
+     */
+    void insert_basic_block(const std::string &blk_name) noexcept;
+
+    /**
+     * Removes a basic block from the current function. Returns false if the block is not found and
+     * throws an exception if we tried to remove the entry basic block.
+     */
+    bool remove_basic_block(const std::string &blk_name);
 };
 
 /**
@@ -61,15 +78,31 @@ class Module {
      */
     explicit Module(const std::string &name) : name(name) {}
 
+    const std::string &get_name() const { return name; }
+
+    const std::vector<Function> &get_functions() const { return functions; }
+
     /**
-     *  Inserts the given function into the current module.
+     * Inserts the given function into the current module.
      */
-    void insert(const Function &fn);
+    void insert(const Function &fn) noexcept;
     /**
-     * Removes the function with @c fn_name name from the current module.
-     * Returns false if the function is not found.
+     * Removes the function with @c fn_name name from the current module and throws an exception if
+     * the function does not exist.
      */
     bool remove(const std::string &fn_name);
+
+    /**
+     * Inserts a new basic block into the given function, creating a new one the latter does not
+     * exist.
+     */
+    void insert_basic_block(const std::string &fn_name, const std::string &blk_name) noexcept;
+
+    /**
+     * Removes a basic block from the given function. Returns false if the block is not found and
+     * throws an exception if we tried to remove a entry basic block or the function does not exist.
+     */
+    bool remove_basic_block(const std::string &fn_name, const std::string &blk_name);
 };
 
 #endif //!__MODULE__H__
